@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "notion-utils"
+name = "notion-tools"
 version = "0.1.0"
 description = "Python and pandas helpers for Notion"
 authors = ["Patch Biosciences, Inc. <contact@patch.bio>"]
