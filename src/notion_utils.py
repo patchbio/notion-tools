@@ -138,23 +138,40 @@ def database_to_dataframe(
         date properties.
 
     """
-    results = []
-    response = {"has_more": True, "next_cursor": None}  # to get the loop going
+    # accumulate all the pages in the database
+    response = notion_client.databases.query(database_id)
+    results = response["results"]
     while response["has_more"]:
+        sleep(0.1)
         response = notion_client.databases.query(
             database_id, start_cursor=response["next_cursor"]
         )
         results += response["results"]
-        sleep(0.1)  # to avoid hitting the Notion API rate limit
 
-    # partial apply
-    process_page = lambda page: _page_to_simple_dict(
-        page, default_date_handler=default_date_handler, date_handlers=date_handlers
+    # convert each page to a simplified dict => Pandas DataFrame
+    records = map(
+        lambda page: _page_to_simple_dict(
+            page,
+            default_date_handler=default_date_handler,
+            date_handlers=date_handlers,
+        ),
+        results,
     )
-    return pd.DataFrame(map(process_page, results))
+    df = pd.DataFrame(records)
+
+    # if any of the columns are tuples, it means those were date columns which
+    # were handled with "multiindex" => the dataframe needs to be given
+    # hierarchical columns
+    if any(isinstance(col, tuple) for col in df.columns):
+        multiindex = pd.MultiIndex.from_tuples(
+            [col if isinstance(col, tuple) else (col, "") for col in df.columns]
+        )
+        df.columns = multiindex
+
+    return df
 
 
-def user_to_simple_dict(user: dict) -> dict:
+def _user_to_simple_dict(user: dict) -> dict:
     """Convert Notion User objects to a "simple" dictionary suitable for Pandas.
 
     This is suitable for objects that have `"object": "user"`
@@ -175,7 +192,7 @@ def users_to_dataframe(notion_client: NotionClient):
     response = notion_client.users.list()
     results = response["results"]
     while response["has_more"]:
-        sleep(0.5)
+        sleep(0.1)
         response = notion_client.users.list(start_cursor=response["next_cursor"])
         results += response["results"]
-    return pd.DataFrame(map(user_to_simple_dict, results))
+    return pd.DataFrame(map(_user_to_simple_dict, results))
