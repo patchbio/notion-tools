@@ -1,7 +1,7 @@
 # notion-tools
 
-Python tools to work with Notion, including retrieving databases as Pandas
-dataframes.
+Python tools to work with the Notion API, including retrieving databases as
+Pandas dataframes.
 
 ## Getting Started
 
