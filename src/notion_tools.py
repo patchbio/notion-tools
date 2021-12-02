@@ -9,9 +9,14 @@ from notion_client import Client as NotionClient
 
 
 def get_notion_token() -> str:
-    """Get a Notion API token.
+    """Gets a Notion API token.
 
     Either from the NOTION_TOKEN environment variable or interactively.
+
+    Returns
+    -------
+    str
+        The Notion API token.
     """
     if "NOTION_TOKEN" in os.environ:
         return os.environ["NOTION_TOKEN"]
@@ -20,7 +25,21 @@ def get_notion_token() -> str:
 
 
 def get_notion_client(token: str) -> NotionClient:
-    """Get a Notion API client"""
+    """Gets a Notion API client.
+
+    The Notion API client used is
+    https://github.com/ramnes/notion-sdk-py
+
+    Parameters
+    ----------
+    token
+        The Notion API Integration Token.
+
+    Returns
+    -------
+    NotionClient
+        The Notion API client.
+    """
     return NotionClient(auth=token)
 
 
@@ -88,6 +107,7 @@ def _page_to_simple_dict(
     """Convert Notion Page objects to a "simple" dictionary suitable for Pandas.
 
     This is suitable for objects that have `"object": "page"`
+
     """
     if date_handlers is None:
         date_handlers = {}
@@ -121,22 +141,42 @@ def database_to_dataframe(
     default_date_handler: str = "ignore_end",
     date_handlers: dict[str, str] = None,
 ) -> pd.DataFrame:
-    """Extract a Notion Database as a Pandas DataFrame.
+    """Extracts a Notion Database as a Pandas DataFrame.
 
-    Date handlers
-    -------------
+    Parameters
+    ----------
+    notion_client
+        The Notion API client.
+    database_id
+        The Notion Database ID. This identifier can be found in the URL of the
+        database.
+    default_date_handler : {"ignore_end", "mangle", "multiindex"}
+        The default date handler. See Notes below on how to use this.
+    date_handlers
+        Specify per-column date handlers.
 
-    ignore_end:
+    Returns
+    -------
+    pd.DataFrame
+        The Notion Database as a Pandas DataFrame.
+
+    Notes
+    -----
+    Notion date properties are represented as 2-tuples with a start and end
+    timestamps. If there is only a single date in the property, it is encoded as
+    a start date with a null end date. There are several options on how to
+    encode this into the resulting dataframe.
+
+    "ignore_end":
         Keep only the start date of the date object and keep column name the
         same as the property name.
-    mangle:
+    "mangle":
         For each date property named "foo" in the Notion table, create a
         "foo_start" and a "foo_end" column.
-    multiindex:
+    "multiindex":
         Create a MultiIndex for the columns where the top level contains the
         property names and the second level contains "start" and "end" for
         date properties.
-
     """
     # accumulate all the pages in the database
     response = notion_client.databases.query(database_id)
@@ -188,7 +228,24 @@ def _user_to_simple_dict(user: dict) -> dict:
 
 
 def users_to_dataframe(notion_client: NotionClient):
-    """Extract all Notion users as a Pandas DataFrame."""
+    """Extract all Notion users as a Pandas DataFrame.
+
+    Parameters
+    ----------
+    notion_client
+        The Notion API client.
+
+    Returns
+    -------
+    pd.DataFrame
+        The Notion users as a Pandas DataFrame.
+
+    Notes
+    -----
+    If users are deleted from your Notion workspace, they will not be returned
+    by the API, even if they are still present in Person properties in your
+    databases.
+    """
     response = notion_client.users.list()
     results = response["results"]
     while response["has_more"]:
