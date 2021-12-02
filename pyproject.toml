@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "notion-tools"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python and pandas helpers for Notion"
 authors = ["Patch Biosciences, Inc. <contact@patch.bio>"]
 license = "Apache-2.0"
