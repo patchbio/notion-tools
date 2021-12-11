@@ -121,6 +121,8 @@ def _page_to_simple_dict(
     for property, value in page["properties"].items():
         extracted = _simplify_notion_property_value(value)
         if value["type"] == "date":
+            if extracted is None:
+                extracted = (None, None)
             handler = date_handlers.get(property, default_date_handler)
             if handler == "ignore_end":
                 record[property] = extracted[0]
