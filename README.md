@@ -23,7 +23,7 @@ database_id = # database id retrievable from the share URL
 notion_client = get_notion_client(get_notion_token())
 df = database_to_dataframe(notion_client, database_id)
 ```
-The database id will be the part of the URL after `https://www.notion.so/patchbio/` and before the `?`. E.g., https://www.notion.so/patchbio/**b54ea5c45dac4b46b91664cfea73b8fc**?v=bd9e02be28554652b83187fb29ba7965
+The database id will be the part of the URL after `https://www.notion.so/patchbio/` and before the `?`. E.g., https://www<area>.notion.so/patchbio/**b54ea5c45dac4b46b91664cfea73b8fc**?v=bd9e02be28554652b83187fb29ba7965
 
 ## API
 
