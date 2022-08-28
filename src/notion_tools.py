@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from getpass import getpass
 from time import sleep
+from typing import Optional
 
 import pandas as pd
 from notion_client import Client as NotionClient
@@ -24,7 +25,7 @@ def get_notion_token() -> str:
         return getpass("Enter Notion API Integration Token: ")
 
 
-def get_notion_client(token: str) -> NotionClient:
+def get_notion_client(token: Optional[str] = None) -> NotionClient:
     """Gets a Notion API client.
 
     The Notion API client used is
@@ -40,6 +41,8 @@ def get_notion_client(token: str) -> NotionClient:
     NotionClient
         The Notion API client.
     """
+    if token is None:
+        token = get_notion_token()
     return NotionClient(auth=token)
 
 
