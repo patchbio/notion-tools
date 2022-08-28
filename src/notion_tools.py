@@ -43,6 +43,31 @@ def get_notion_client(token: str) -> NotionClient:
     return NotionClient(auth=token)
 
 
+def nonpaginated(endpoint, wait=0.1):
+    """Create a non-paginated version of a Notion endpoint.
+
+    Wraps a paginated Notion endpoint and when called, will return a response
+    object that concats all the pages. Waits `wait` seconds on each iteration to
+    the API.
+
+    Example
+    ```
+    response = nonpaginated(notion_client.blocks.children.list)(block_id)
+    ```
+    """
+    def wrapped(*args, **kwargs):
+        response = endpoint(*args, **kwargs)
+        results = response["results"]
+        while response["has_more"]:
+            sleep(wait)
+            kwargs["start_cursor"] = response["next_cursor"]
+            response = endpoint(*args, **kwargs)
+            results += response["results"]
+        response["results"] = results
+        return response
+    return wrapped
+
+
 def _simplify_notion_property_value(value: dict):
     """Convert Notion Property Value to a simple/primitive data type
 
@@ -180,15 +205,8 @@ def database_to_dataframe(
         property names and the second level contains "start" and "end" for
         date properties.
     """
-    # accumulate all the pages in the database
-    response = notion_client.databases.query(database_id)
+    response = nonpaginated(notion_client.databases.query)(database_id)
     results = response["results"]
-    while response["has_more"]:
-        sleep(0.1)
-        response = notion_client.databases.query(
-            database_id, start_cursor=response["next_cursor"]
-        )
-        results += response["results"]
 
     # convert each page to a simplified dict => Pandas DataFrame
     records = map(
@@ -248,10 +266,6 @@ def users_to_dataframe(notion_client: NotionClient):
     by the API, even if they are still present in Person properties in your
     databases.
     """
-    response = notion_client.users.list()
+    response = nonpaginated(notion_client.users.list)()
     results = response["results"]
-    while response["has_more"]:
-        sleep(0.1)
-        response = notion_client.users.list(start_cursor=response["next_cursor"])
-        results += response["results"]
     return pd.DataFrame(map(_user_to_simple_dict, results))
