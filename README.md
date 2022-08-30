@@ -23,7 +23,12 @@ database_id = # database id retrievable from the share URL
 notion_client = get_notion_client(get_notion_token())
 df = database_to_dataframe(notion_client, database_id)
 ```
-The database id will be the part of the URL after `https://www.notion.so/patchbio/` and before the `?`. E.g., https<area>://www<area>.notion.so/patchbio/**b54ea5c45dac4b46b91664cfea73b8fc**?v=bd9e02be28554652b83187fb29ba7965
+
+To find the database id, take the hex string from the URL for sharing the page:
+
+```
+https://www.notion.so/yourworkspace/{database_id}?v={other_hex_stuff}
+```
 
 ## API
 
@@ -40,7 +45,7 @@ notion_tools.get_notion_token() -> str
    Return type:
       str
 
-notion_tools.get_notion_client(token: str) -> notion_client.client.Client
+notion_tools.get_notion_client(token: Optional[str] = None) -> notion_client.client.Client
 
    Gets a Notion API client.
 
@@ -48,7 +53,7 @@ notion_tools.get_notion_client(token: str) -> notion_client.client.Client
    py
 
    Parameters:
-      **token** (*str*) -- The Notion API Integration Token.
+      **token** -- The Notion API Integration Token.
 
    Returns:
       The Notion API client.
@@ -56,22 +61,35 @@ notion_tools.get_notion_client(token: str) -> notion_client.client.Client
    Return type:
       NotionClient
 
-notion_tools.database_to_dataframe(notion_client: NotionClient, database_id: str, default_date_handler: str = 'ignore_end', date_handlers: dict[str, str] = None) -> pd.DataFrame
+notion_tools.nonpaginated(endpoint, wait=0.1)
+
+   Create a non-paginated version of a Notion endpoint.
+
+   Wraps a paginated Notion endpoint and when called, will return a
+   response object that concats all the pages. Waits *wait* seconds on
+   each iteration to the API.
+
+   -[ Example ]-
+
+   response =
+   nonpaginated(notion_client.blocks.children.list)(block_id)
+   >>``<<>>`<<
+
+notion_tools.database_to_dataframe(notion_client: notion_client.client.Client, database_id: str, default_date_handler: str = 'ignore_end', date_handlers: Optional[dict] = None) -> pandas.core.frame.DataFrame
 
    Extracts a Notion Database as a Pandas DataFrame.
 
    Parameters:
-      * **notion_client** (*NotionClient*) -- The Notion API client.
+      * **notion_client** -- The Notion API client.
 
-      * **database_id** (*str*) -- The Notion Database ID. This
-        identifier can be found in the URL of the database.
+      * **database_id** -- The Notion Database ID. This identifier can
+        be found in the URL of the database.
 
       * **default_date_handler** (*{"ignore_end"**, **"mangle"**,
         **"multiindex"}*) -- The default date handler. See Notes below
         on how to use this.
 
-      * **date_handlers** (*dict**[**str**, **str**]*) -- Specify per-
-        column date handlers.
+      * **date_handlers** -- Specify per-column date handlers.
 
    Returns:
       The Notion Database as a Pandas DataFrame.
@@ -104,8 +122,7 @@ notion_tools.users_to_dataframe(notion_client: notion_client.client.Client)
    Extract all Notion users as a Pandas DataFrame.
 
    Parameters:
-      **notion_client** (*notion_client.client.Client*) -- The Notion
-      API client.
+      **notion_client** -- The Notion API client.
 
    Returns:
       The Notion users as a Pandas DataFrame.
